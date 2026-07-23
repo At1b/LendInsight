@@ -27,4 +27,22 @@ import streamlit as st
 
 @st.cache_data
 def load_data():
-    return pd.read_csv("data/raw/loan_data.csv")    
+    df = pd.read_csv("data/raw/loan_data.csv")
+
+    df.rename(columns={
+        "Id": "id",
+        "Income": "income",
+        "Age": "age",
+        "Experience": "experience",
+        "Married/Single": "marital_status",
+        "House_Ownership": "house_ownership",
+        "Car_Ownership": "car_ownership",
+        "Profession": "profession",
+        "CITY": "city",
+        "STATE": "state",
+        "CURRENT_JOB_YRS": "current_job_yrs",
+        "CURRENT_HOUSE_YRS": "current_house_yrs",
+        "Risk_Flag": "risk_flag"
+    }, inplace=True)
+
+    return df
