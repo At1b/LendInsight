@@ -1,143 +1,138 @@
-import os
 import streamlit as st
-import pandas as pd
-from sqlalchemy import create_engine
-from dotenv import load_dotenv
+from utils.data_loader import load_data
 
-load_dotenv()
-
-DATABASE_URL = (
-    f"postgresql://{os.getenv('DB_USER')}:"
-    f"{os.getenv('DB_PASSWORD')}@"
-    f"{os.getenv('DB_HOST')}:"
-    f"{os.getenv('DB_PORT')}/"
-    f"{os.getenv('DB_NAME')}"
-)
-
-engine = create_engine(DATABASE_URL)
 
 @st.cache_data
 def get_total_customers():
-    query = "SELECT COUNT(*) FROM loan_data;"
-    return pd.read_sql(query, engine).iloc[0, 0]
+    df = load_data()
+    return len(df)
 
 
 @st.cache_data
 def get_average_income():
-    query = "SELECT ROUND(AVG(income),2) FROM loan_data;"
-    return pd.read_sql(query, engine).iloc[0, 0]
+    df = load_data()
+    return round(df["income"].mean(), 2)
 
 
 @st.cache_data
 def get_high_risk_customers():
-    query = "SELECT COUNT(*) FROM loan_data WHERE risk_flag=1;"
-    return pd.read_sql(query, engine).iloc[0, 0]
+    df = load_data()
+    return int(df["risk_flag"].sum())
 
 
 @st.cache_data
 def get_total_states():
-    query = "SELECT COUNT(DISTINCT state) FROM loan_data;"
-    return pd.read_sql(query, engine).iloc[0, 0]
+    df = load_data()
+    return df["state"].nunique()
 
 
 @st.cache_data
 def get_top_states():
-    query = """
-    SELECT state, COUNT(*) AS customers
-    FROM loan_data
-    GROUP BY state
-    ORDER BY customers DESC
-    LIMIT 10;
-    """
-    return pd.read_sql(query, engine)
+    df = load_data()
+    return (
+        df.groupby("state")
+        .size()
+        .reset_index(name="customers")
+        .sort_values("customers", ascending=False)
+        .head(10)
+    )
 
 
 @st.cache_data
 def get_top_professions():
-    query = """
-    SELECT profession, COUNT(*) AS customers
-    FROM loan_data
-    GROUP BY profession
-    ORDER BY customers DESC
-    LIMIT 10;
-    """
-    return pd.read_sql(query, engine)
+    df = load_data()
+    return (
+        df.groupby("profession")
+        .size()
+        .reset_index(name="customers")
+        .sort_values("customers", ascending=False)
+        .head(10)
+    )
 
 
 @st.cache_data
 def get_risk_by_state():
-    query = """
-    SELECT
-        state,
-        ROUND(100.0 * SUM(risk_flag) / COUNT(*),2) AS risk_percentage
-    FROM loan_data
-    GROUP BY state
-    ORDER BY risk_percentage DESC;
-    """
-    return pd.read_sql(query, engine)
+    df = load_data()
+
+    result = (
+        df.groupby("state")["risk_flag"]
+        .mean()
+        .mul(100)
+        .round(2)
+        .reset_index(name="risk_percentage")
+        .sort_values("risk_percentage", ascending=False)
+    )
+
+    return result
 
 
 @st.cache_data
 def get_average_income_by_state():
-    query = """
-    SELECT state,
-           ROUND(AVG(income),2) AS average_income
-    FROM loan_data
-    GROUP BY state
-    ORDER BY average_income DESC;
-    """
-    return pd.read_sql(query, engine)
+    df = load_data()
+
+    return (
+        df.groupby("state")["income"]
+        .mean()
+        .round(2)
+        .reset_index(name="average_income")
+        .sort_values("average_income", ascending=False)
+    )
 
 
 @st.cache_data
 def get_top_income_professions():
-    query = """
-    SELECT profession,
-           ROUND(AVG(income),2) AS average_income
-    FROM loan_data
-    GROUP BY profession
-    ORDER BY average_income DESC
-    LIMIT 10;
-    """
-    return pd.read_sql(query, engine)
+    df = load_data()
+
+    return (
+        df.groupby("profession")["income"]
+        .mean()
+        .round(2)
+        .reset_index(name="average_income")
+        .sort_values("average_income", ascending=False)
+        .head(10)
+    )
 
 
 @st.cache_data
 def get_age_distribution():
-    query = """
-    SELECT age, COUNT(*) AS customers
-    FROM loan_data
-    GROUP BY age
-    ORDER BY age;
-    """
-    return pd.read_sql(query, engine)
+    df = load_data()
+
+    return (
+        df.groupby("age")
+        .size()
+        .reset_index(name="customers")
+        .sort_values("age")
+    )
 
 
 @st.cache_data
 def get_marital_status():
-    query = """
-    SELECT marital_status, COUNT(*) AS customers
-    FROM loan_data
-    GROUP BY marital_status;
-    """
-    return pd.read_sql(query, engine)
+    df = load_data()
+
+    return (
+        df.groupby("marital_status")
+        .size()
+        .reset_index(name="customers")
+    )
 
 
 @st.cache_data
 def get_house_ownership():
-    query = """
-    SELECT house_ownership, COUNT(*) AS customers
-    FROM loan_data
-    GROUP BY house_ownership;
-    """
-    return pd.read_sql(query, engine)
+    df = load_data()
+
+    return (
+        df.groupby("house_ownership")
+        .size()
+        .reset_index(name="customers")
+    )
 
 
 @st.cache_data
 def get_car_ownership():
-    query = """
-    SELECT car_ownership, COUNT(*) AS customers
-    FROM loan_data
-    GROUP BY car_ownership;
-    """
-    return pd.read_sql(query, engine)
+    df = load_data()
+
+    return (
+        df.groupby("car_ownership")
+        .size()
+        .reset_index(name="customers")
+    )
